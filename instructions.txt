@@ -1,42 +1,42 @@
-ʹ��˵��
+使用说明
 
-���ݹ��߻�������̷����·�ɣ�Ȼ�󱸷�������Ⱥ��
-1���ҵ��ٲýڵ㣨��������װmongodb������������Ϊ���ݻ��������Ͱ�װ����
-��1��	��װpython��һ����LinuxĬ�ϰ�װ�õģ����������������У�
-����Ƿ�װpython��python --version
-��û�а�װ��sh pythonInstall.sh
-��2��	��װpython����pymongo��sh autoInstall.sh
-��3��	��⵱ǰ�����������Ƿ���������
+备份工具会接入网盘服务的路由，然后备份整个集群。为了保证备份时，服务器正常工作，该工具在设计时要求：每个节点必须是副本集，且从节点可用。
 
-2�������������ļ��ŵ����ݻ���ͬһĿ¼�£�
-��1��	mongos_backup.conf  ����Ҫ�޸Ĳ�����
-��2��	mongos_backup_from_secondary.py  ����Ҫ��ִ��Ȩ�ޣ�
+1、找到仲裁节点（或其它安装mongodb的主机），作为备份机，并检查和安装依赖
+（1）	安装python（一般是Linux默认安装好的）
+检测是否安装python：python --version
+(centos6.5默认的2.6.6版本即可，该工具的python版本为2.7，不支持3.x)
+（2）	安装python依赖pymongo：sh autoInstall.sh
 
-3���޸Ĳ�����ֻ���޸�mongos_backup.conf��
- ��1��[base-options]
-mongo_bin_dir=/usr/local/mongodb/bin   #mongodb��װĿ¼�����������ļ�Ŀ¼
-full_backup_dir=/usr/local/mongodb/backup/full   #ȫ��Ŀ¼
-inc_backup_dir=/usr/local/mongodb/backup/inc   #����Ŀ¼
+2、将下述两个文件放到备份机的同一目录下：
+（1）	mongos_backup.conf  （需要修改参数）
+（2）	mongos_backup_from_secondary.py  （需要可执行权限）
 
-��2��[mongos-options]
-mongos_ip=10.1.20.70   #·�ɵ�ַ
-mongos_port=20000     #·�ɶ˿�
+3、修改参数（只需修改mongos_backup.conf）
+ （1）[base-options]
+mongo_bin_dir=/usr/local/mongodb/bin   #mongodb安装目录，即二进制文件目录
+full_backup_dir=/usr/local/mongodb/backup/full   #全备目录
+inc_backup_dir=/usr/local/mongodb/backup/inc   #增备目录
 
-��3��[config-server-options]
-config_ip=10.1.20.70    #���÷�������ַ��һ����3����ѡһ��
-config_port=10000     #���÷������˿ڣ���config_ip��Ӧ�Ķ˿�
+（2）[mongos-options]
+mongos_ip=10.1.1.1    #路由地址
+mongos_port=20000     #路由端口
 
-4�����з�ʽ
-ȫ�����������Ƕ�������Ⱥ������ͨ��·��ʵ�֡�
-��1���ֶ����У�
-�ڽű�����Ŀ¼�£�
-python mongos_backup_from_secondary.py full   #ȫ��������config+shard������������
-����
-python mongos_backup_from_secondary.py inc   #����������configȫ��+oplog.rs�������� 
-��2����ʱ����ʽ���У�
-�༭ crontab �Ce����������
-0	2  *  *  1  python  ȫ·��/ mongos_backup_from_secondary.py  full
-0  2  *  *  2,3,4,5,6,0  python  ȫ·��/ mongos_backup_from_secondary.py  inc
-���ͣ�
-��һ�У�ÿ��һ���賿2�����һ��ȫ����������ʱ��ɵ���
-�ڶ��У�����һ��ÿ����賿2�����һ��������
+（3）[config-server-options]
+config_ip=10.1.1.1    #配置服务器地址，一般有3个任选一个
+config_port=10000     #配置服务器端口，与config_ip对应的端口
+
+4、运行方式
+全备和增备均是对整个集群操作，通过路由实现。
+（1）手动运行：
+在脚本所在目录下：
+python mongos_backup_from_secondary.py full   #全备：包括config+shard所有网盘数据
+或者
+python mongos_backup_from_secondary.py inc   #增备：包括config全备+oplog.rs新增数据 
+（2）定时任务方式运行：
+编辑 crontab –e，增加两行
+0	2  *  *  1  python  全路径/ mongos_backup_from_secondary.py  full
+0  2  *  *  2,3,4,5,6,0  python  全路径/ mongos_backup_from_secondary.py  inc
+解释：
+第一行：每周一的凌晨2点进行一次全备；（具体时间可调）
+第二行：除周一外每天的凌晨2点进行一次增备；
