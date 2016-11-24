@@ -17,6 +17,7 @@
 mongo_bin_dir=/usr/local/mongodb/bin   #mongodb安装目录，即二进制文件目录
 full_backup_dir=/usr/local/mongodb/backup/full   #全备目录
 inc_backup_dir=/usr/local/mongodb/backup/inc   #增备目录
+backup_start_date=2016-01-01  #指定备份开始日期（只需第一次使用时才指定）
 
 （2）[mongos-options]
 mongos_ip=10.1.1.1    #路由地址
