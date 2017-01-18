@@ -177,7 +177,8 @@ class Backup:
                 second = self.second_node_used[shard['name']]
                 if second == null:
                     return False
-                
+                #change last_backup_date to timestamp in second, this variable is a string                 
+                timestamp = 'new Date("' + self.config.last_backup_date + '").getTime()/1000'                
                 #find the last oplog record
                 cmd_last_oplog_record = self.config.mongo_bin_dir + "/mongo "+  \
                           str(second) + "/local "     \
